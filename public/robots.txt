@@ -1,0 +1,94 @@
+# SmartHub Computers - Robots.txt for SEO optimization
+
+User-agent: *
+Allow: /
+
+# Explicitly allow category pages for better indexing
+Allow: /laptops
+Allow: /desktops
+Allow: /components
+Allow: /peripherals
+Allow: /gaming
+Allow: /audio
+Allow: /printers
+Allow: /phones
+Allow: /refurbished-phones
+
+# Allow important pages for SEO
+Allow: /products/
+Allow: /flash-sales/
+Allow: /uploads/
+
+# Disallow private and admin areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /private/
+Disallow: /tmp/
+Disallow: /uploads/private/
+Disallow: /*?*
+Disallow: /search?
+Disallow: /*.pdf$
+Disallow: /*.doc$
+Disallow: /*.docx$
+
+# Crawl-delay for better server performance
+Crawl-delay: 1
+
+# Sitemap locations
+Sitemap: https://smarthubcomputers.com/sitemap.xml
+
+# Search engine specific instructions
+User-agent: Googlebot
+Allow: /
+Allow: /laptops
+Allow: /desktops
+Allow: /components
+Allow: /peripherals
+Allow: /gaming
+Allow: /audio
+Allow: /printers
+Allow: /phones
+Allow: /refurbished-phones
+Disallow: /admin/
+Disallow: /api/
+Crawl-delay: 1
+
+User-agent: Googlebot-Image
+Allow: /uploads/
+Allow: /images/
+Disallow: /uploads/private/
+
+User-agent: Bingbot
+Allow: /
+Allow: /laptops
+Allow: /desktops
+Allow: /components
+Allow: /peripherals
+Allow: /gaming
+Allow: /audio
+Allow: /printers
+Allow: /phones
+Allow: /refurbished-phones
+Disallow: /admin/
+Disallow: /api/
+Crawl-delay: 1
+
+# Social media crawlers
+User-agent: Twitterbot
+Allow: /
+Disallow: /admin/
+
+User-agent: facebookexternalhit
+Allow: /
+Disallow: /admin/
+
+# Block unwanted bots
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
