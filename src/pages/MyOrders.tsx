@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import FeedbackForm from '@/components/FeedbackForm';
+import ReceiptDownload from '@/components/ReceiptDownload';
 
 interface Order {
   id: string;
@@ -368,6 +369,14 @@ const MyOrders = () => {
                           {showFeedbackForm === order.id ? 'Hide Review Form' : 'Write Review'}
                         </Button>
                       )}
+
+                      <ReceiptDownload 
+                        orderId={order.id}
+                        orderStatus={order.status}
+                        customerName={order.customer_name}
+                        variant="outline"
+                        size="sm"
+                      />
                     </div>
 
                     {/* Feedback Form */}
