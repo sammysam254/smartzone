@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import OptimizedProductCard from './OptimizedProductCard';
+import CircularLoader from './CircularLoader';
 import { useCart } from '@/hooks/useCart';
 import { useNavigate } from 'react-router-dom';
 
@@ -58,7 +59,11 @@ const FastProductGrid = memo(({ products, loading = false, priority = false }: F
   };
 
   if (loading) {
-    return <LoadingSkeleton />;
+    return (
+      <div className="flex justify-center items-center py-12">
+        <CircularLoader size="lg" text="Loading amazing products..." />
+      </div>
+    );
   }
 
   if (products.length === 0) {

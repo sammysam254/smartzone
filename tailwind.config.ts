@@ -122,6 +122,20 @@ export default {
 				'scale-in': {
 					'0%': { transform: 'scale(0.95)', opacity: '0' },
 					'100%': { transform: 'scale(1)', opacity: '1' }
+				},
+				'spin-slow': {
+					'0%': { transform: 'rotate(0deg)' },
+					'100%': { transform: 'rotate(360deg)' }
+				},
+				'pulse-ring': {
+					'0%': { 
+						transform: 'scale(0.8)',
+						opacity: '1'
+					},
+					'100%': {
+						transform: 'scale(1.2)',
+						opacity: '0'
+					}
 				}
 			},
 			animation: {
@@ -130,7 +144,9 @@ export default {
 				'scroll': 'scroll 20s linear infinite',
 				'shimmer': 'shimmer 2s infinite',
 				'fade-in': 'fade-in 0.3s ease-out',
-				'scale-in': 'scale-in 0.2s ease-out'
+				'scale-in': 'scale-in 0.2s ease-out',
+				'spin-slow': 'spin-slow 3s linear infinite',
+				'pulse-ring': 'pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
 			}
 		}
 	},
