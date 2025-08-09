@@ -52,14 +52,22 @@ const UsersManager = () => {
     if (!confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone and will allow them to sign up again.`)) return;
 
     try {
-      const { error } = await supabase.auth.admin.deleteUser(userId);
-      if (error) throw error;
+      // First call our secure function to clean up profile data
+      const { error: profileError } = await supabase.rpc('delete_user_as_admin', { 
+        user_id_to_delete: userId 
+      });
+      
+      if (profileError) throw profileError;
+
+      // Then delete the user from auth.users using admin API
+      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
+      if (authError) throw authError;
       
       toast.success('User deleted successfully');
       loadUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
+      toast.error('Failed to delete user. Please try again.');
     }
   };
 
