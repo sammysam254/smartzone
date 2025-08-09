@@ -92,31 +92,8 @@ serve(async (req) => {
     const vat = subtotal * 0.16;
     const total = subtotal + vat;
 
-    // SmartHub Computers logo as SVG
-    const companyLogoSvg = `<svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="200" height="80" fill="white"/>
-      <!-- Monitor/Computer Icon -->
-      <rect x="10" y="15" width="30" height="18" rx="2" fill="#2c4156" stroke="#37495e" stroke-width="1"/>
-      <rect x="11" y="16" width="28" height="16" fill="#4169ff"/>
-      <rect x="12" y="17" width="26" height="14" fill="#1e40af"/>
-      <rect x="22" y="33" width="6" height="5" fill="#2c4156"/>
-      <rect x="18" y="38" width="14" height="2" fill="#2c4156"/>
-      <circle cx="36" cy="40" r="4" fill="#29a3a3"/>
-      <circle cx="36" cy="40" r="2" fill="#2293a3"/>
-      
-      <!-- Company Name -->
-      <text x="50" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c4156">SmartHub</text>
-      <text x="50" y="45" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#4169ff">Computers</text>
-      
-      <!-- Tech Elements -->
-      <circle cx="160" cy="20" r="3" fill="#29a3a3"/>
-      <circle cx="170" cy="25" r="2" fill="#4169ff"/>
-      <circle cx="180" cy="18" r="2.5" fill="#2c4156"/>
-      <rect x="155" y="35" width="35" height="2" rx="1" fill="#29a3a3"/>
-      <rect x="160" y="40" width="25" height="2" rx="1" fill="#4169ff"/>
-    </svg>`;
-
-    const logoBase64 = btoa(companyLogoSvg);
+    // Use the company logo from the uploaded assets
+    const logoUrl = "https://axihtddcqfotuyelfdqj.supabase.co/storage/v1/object/public/lovable-uploads/e794c35d-09b9-447c-9ad8-265176240bde.png";
 
     // Generate HTML receipt
     const receiptHtml = `
@@ -130,75 +107,76 @@ serve(async (req) => {
           body { 
             font-family: Arial, sans-serif; 
             margin: 0; 
-            padding: 20px; 
-            background-color: #f9f9f9;
+            padding: 15px; 
+            background-color: white;
             color: #333;
+            font-size: 12px;
           }
           .receipt {
-            max-width: 800px;
+            max-width: 100%;
             margin: 0 auto;
             background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
           }
           .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e0e0e0;
           }
           .logo {
-            max-height: 80px;
-            margin-bottom: 15px;
+            max-height: 50px;
+            margin-bottom: 5px;
           }
           .company-name {
-            font-size: 28px;
+            font-size: 18px;
             font-weight: bold;
             color: #2c3e50;
-            margin: 10px 0;
+            margin: 5px 0;
           }
           .contact-info {
-            font-size: 14px;
+            font-size: 10px;
             color: #666;
-            line-height: 1.5;
+            line-height: 1.3;
           }
           .receipt-title {
-            font-size: 24px;
+            font-size: 16px;
             font-weight: bold;
             text-align: center;
-            margin: 20px 0;
+            margin: 10px 0;
             color: #27ae60;
           }
           .receipt-info {
             text-align: center;
             color: #666;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
+            font-size: 10px;
           }
           .section {
-            margin: 25px 0;
+            margin: 10px 0;
           }
           .section-title {
-            font-size: 18px;
+            font-size: 12px;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
             color: #2c3e50;
             border-bottom: 1px solid #e0e0e0;
-            padding-bottom: 5px;
+            padding-bottom: 2px;
           }
           .info-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 10px;
           }
           .info-item {
             display: flex;
-            margin-bottom: 8px;
+            margin-bottom: 3px;
+            font-size: 10px;
           }
           .info-label {
             font-weight: bold;
-            min-width: 120px;
+            min-width: 80px;
             color: #555;
           }
           .info-value {
@@ -207,12 +185,13 @@ serve(async (req) => {
           .table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 10px 0;
             background: white;
+            font-size: 10px;
           }
           .table th, .table td {
             border: 1px solid #ddd;
-            padding: 12px;
+            padding: 6px;
             text-align: left;
           }
           .table th {
@@ -226,48 +205,49 @@ serve(async (req) => {
           .total-row {
             font-weight: bold;
             background-color: #e8f5e8 !important;
-            font-size: 16px;
           }
           .payment-confirmed {
             background-color: #d4edda;
             color: #155724;
-            padding: 15px;
-            border-radius: 5px;
+            padding: 8px;
+            border-radius: 3px;
             text-align: center;
             font-weight: bold;
-            margin: 20px 0;
+            margin: 10px 0;
+            font-size: 10px;
           }
           .mpesa-highlight {
             background-color: #e8f5e8;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            border-left: 5px solid #27ae60;
-          }
-          .mpesa-code {
-            font-size: 24px;
-            font-weight: bold;
-            color: #155724;
-            letter-spacing: 2px;
-            font-family: monospace;
-            background-color: #f8f9fa;
             padding: 10px;
             border-radius: 5px;
+            text-align: center;
+            border-left: 3px solid #27ae60;
             margin: 10px 0;
+          }
+          .mpesa-code {
+            font-size: 16px;
+            font-weight: bold;
+            color: #155724;
+            letter-spacing: 1px;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 5px;
+            border-radius: 3px;
+            margin: 5px 0;
           }
           .footer {
             text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
+            margin-top: 15px;
+            padding-top: 10px;
             border-top: 1px solid #e0e0e0;
             color: #666;
-            font-size: 12px;
+            font-size: 10px;
           }
           .status-badge {
             display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 9px;
             font-weight: bold;
             text-transform: uppercase;
           }
@@ -276,20 +256,19 @@ serve(async (req) => {
             color: #155724;
           }
           @media print {
-            body { margin: 0; padding: 15px; background: white; }
-            .receipt { box-shadow: none; margin: 0; padding: 0; }
+            body { margin: 0; padding: 10px; background: white; }
+            .receipt { margin: 0; padding: 0; }
           }
         </style>
       </head>
       <body>
         <div class="receipt">
           <div class="header">
-            <img src="data:image/svg+xml;base64,${logoBase64}" alt="SmartHub Computers Logo" class="logo" />
+            <img src="${logoUrl}" alt="SmartHub Computers Logo" class="logo" />
             <div class="company-name">SmartHub Computers</div>
             <div class="contact-info">
               Koinange Street Uniafric House Room 208<br>
-              Phone: 0704144239 | Email: support@smarthubcomputers.com<br>
-              www.smarthubcomputers.com
+              Phone: 0704144239 | Email: support@smarthubcomputers.com
             </div>
           </div>
 
@@ -314,11 +293,8 @@ serve(async (req) => {
 
           ${transactionCode !== 'N/A' ? `
           <div class="mpesa-highlight">
-            <div class="section-title" style="color: #27ae60; margin-bottom: 10px;">📱 M-Pesa Transaction Confirmation</div>
+            <div class="section-title" style="color: #27ae60; margin-bottom: 5px;">📱 M-Pesa Confirmation Code</div>
             <div class="mpesa-code">${transactionCode}</div>
-            <div style="font-size: 12px; color: #155724;">
-              Reference this code for any payment inquiries with Safaricom or our support team
-            </div>
           </div>
           ` : ''}
 
