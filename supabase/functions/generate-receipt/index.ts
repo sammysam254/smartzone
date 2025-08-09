@@ -17,7 +17,7 @@ serve(async (req) => {
     
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       {
         auth: {
           autoRefreshToken: false,
@@ -26,7 +26,7 @@ serve(async (req) => {
       }
     );
 
-    // Set the session with the provided token
+    // Verify the user token and get user info
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
     if (authError || !user) {
       console.error("Authentication error:", authError);
@@ -40,7 +40,8 @@ serve(async (req) => {
 
     console.log("Fetching order:", orderId, "for user:", user.id);
 
-    // Fetch order details with product and payment information
+    // Use service role to bypass RLS for this administrative function
+    // but still validate user ownership
     const { data: order, error: orderError } = await supabaseClient
       .from('orders')
       .select(`
@@ -62,6 +63,7 @@ serve(async (req) => {
     }
     
     if (!order) {
+      console.error("No order found for ID:", orderId, "and user:", user.id);
       throw new Error("Order not found or access denied");
     }
 
