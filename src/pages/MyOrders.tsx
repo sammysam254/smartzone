@@ -60,30 +60,48 @@ const MyOrders = () => {
     if (!user) return;
 
     try {
+      // Optimized query - only fetch essential fields and limit results
       const { data, error } = await supabase
         .from('orders')
         .select(`
-          *,
-          products (
+          id,
+          created_at,
+          quantity,
+          total_amount,
+          status,
+          customer_name,
+          customer_email,
+          customer_phone,
+          shipping_address,
+          payment_method,
+          products!inner (
             id,
             name,
             price,
-            image_urls
+            images
           )
         `)
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(20); // Limit to most recent 20 orders for better performance
 
       if (error) throw error;
       
-      // Transform orders to include image_url and add missing properties
+      // Transform orders with optimized image processing
       const transformedOrders = data?.map(order => ({
         ...order,
         shipping_fee: null,
         voucher_discount: null,
         products: order.products ? {
           ...order.products,
-          image_url: order.products.image_urls ? JSON.parse(order.products.image_urls)[0] : ''
+          image_url: (() => {
+            try {
+              const images = JSON.parse(order.products.images || '[]');
+              return images[0] || '';
+            } catch {
+              return '';
+            }
+          })()
         } : null
       })) || [];
       
@@ -100,9 +118,10 @@ const MyOrders = () => {
     if (!user) return;
 
     try {
+      // Optimized feedback query - only essential fields
       const { data, error } = await supabase
         .from('feedback')
-        .select('*')
+        .select('id, order_id, product_id, rating, shipping_rating, review_text, created_at')
         .eq('user_id', user.id);
 
       if (error) throw error;
@@ -184,8 +203,8 @@ const MyOrders = () => {
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading your orders...</p>
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading orders...</p>
           </div>
         </div>
         <Footer />

@@ -52,8 +52,16 @@ const ProductsManager = () => {
   const loadProducts = async () => {
     try {
       setLoading(true);
-      const data = await fetchProducts();
-      setProducts(data);
+      // Use optimized query for admin products - only essential fields for list view
+      const { data, error } = await supabase
+        .from('products')
+        .select('id, name, price, category, in_stock, created_at, badge, rating, reviews_count')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(100); // Limit for better performance
+
+      if (error) throw error;
+      setProducts(data || []);
     } catch (error) {
       console.error('Error loading products:', error);
       toast.error('Failed to load products');
@@ -245,7 +253,12 @@ const ProductsManager = () => {
   }
 
   if (loading) {
-    return <div className="text-center py-8">Loading products...</div>;
+    return (
+      <div className="text-center py-8">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto"></div>
+        <p className="mt-2 text-muted-foreground">Loading products...</p>
+      </div>
+    );
   }
 
   return (
