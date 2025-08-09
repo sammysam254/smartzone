@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAdmin } from '@/hooks/useAdmin';
+import { useAudioNotifications } from '@/hooks/useAudioNotifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +24,8 @@ const ProductsManager = () => {
     isAdmin,
     loading: adminLoading
   } = useAdmin();
+  
+  const { playCreateSound, playUpdateSound, playDeleteSound } = useAudioNotifications();
   
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,8 +144,10 @@ const ProductsManager = () => {
 
       if (editingProduct) {
         await updateProduct(editingProduct.id, productData);
+        playUpdateSound();
       } else {
         await createProduct(productData);
+        playCreateSound();
       }
 
       setIsDialogOpen(false);
@@ -195,6 +200,7 @@ const ProductsManager = () => {
       
       if (error) throw error;
       
+      playDeleteSound();
       toast.success('Product deleted successfully');
       loadProducts();
     } catch (error) {

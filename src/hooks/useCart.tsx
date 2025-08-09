@@ -27,7 +27,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const { user } = useAuth();
-  const { playAddToCartSound } = useAudioNotifications();
+  const { playAddToCartSound, playRemoveFromCartSound } = useAudioNotifications();
 
   // Load cart from localStorage on mount and when user changes
   useEffect(() => {
@@ -109,6 +109,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setItems(currentItems => {
       const item = currentItems.find(item => item.id === productId);
       if (item) {
+        // Play remove sound
+        playRemoveFromCartSound();
         toast.success("Removed from cart", {
           description: `${item.name} removed from cart`,
         });

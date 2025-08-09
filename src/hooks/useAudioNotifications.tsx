@@ -52,12 +52,48 @@ export const useAudioNotifications = (options: AudioNotificationOptions = {}) =>
     createChordSound([523.25, 659.25, 783.99], 0.3); // C5, E5, G5
   }, [createChordSound]);
 
+  const playRemoveFromCartSound = useCallback(() => {
+    // Descending minor chime for removal
+    createChordSound([659.25, 523.25, 415.30], 0.25); // E5, C5, G#4
+  }, [createChordSound]);
+
   const playOrderSuccessSound = useCallback(() => {
     // Success fanfare - major chord progression
     setTimeout(() => createChordSound([523.25, 659.25, 783.99], 0.4), 0); // C5, E5, G5
     setTimeout(() => createChordSound([587.33, 739.99, 880.00], 0.4), 200); // D5, F#5, A5
     setTimeout(() => createChordSound([523.25, 659.25, 783.99, 1046.50], 0.6), 400); // C5, E5, G5, C6
   }, [createChordSound]);
+
+  const playOrderCancelSound = useCallback(() => {
+    // Soft descending tone for cancellation
+    createChordSound([440.00, 349.23, 293.66], 0.4); // A4, F4, D4
+  }, [createChordSound]);
+
+  const playAdminActionSound = useCallback(() => {
+    // Professional admin action sound - clean bell tones
+    createChordSound([880.00, 1108.73], 0.2); // A5, C#6
+    setTimeout(() => createChordSound([1174.66, 1318.51], 0.2), 100); // D6, E6
+  }, [createChordSound]);
+
+  const playCreateSound = useCallback(() => {
+    // Creation sound - ascending progression
+    setTimeout(() => createBeepSound(587.33, 0.15, 'sine'), 0); // D5
+    setTimeout(() => createBeepSound(739.99, 0.15, 'sine'), 75); // F#5
+    setTimeout(() => createBeepSound(880.00, 0.15, 'sine'), 150); // A5
+    setTimeout(() => createBeepSound(1174.66, 0.2, 'sine'), 225); // D6
+  }, [createBeepSound]);
+
+  const playDeleteSound = useCallback(() => {
+    // Soft delete sound - not harsh
+    createBeepSound(392.00, 0.2, 'sine'); // G4
+    setTimeout(() => createBeepSound(329.63, 0.2, 'sine'), 100); // E4
+  }, [createBeepSound]);
+
+  const playUpdateSound = useCallback(() => {
+    // Quick update confirmation
+    createBeepSound(1046.50, 0.1, 'sine'); // C6
+    setTimeout(() => createBeepSound(1318.51, 0.1, 'sine'), 50); // E6
+  }, [createBeepSound]);
 
   const playErrorSound = useCallback(() => {
     // Low error tone
@@ -73,7 +109,13 @@ export const useAudioNotifications = (options: AudioNotificationOptions = {}) =>
 
   return {
     playAddToCartSound,
+    playRemoveFromCartSound,
     playOrderSuccessSound,
+    playOrderCancelSound,
+    playAdminActionSound,
+    playCreateSound,
+    playDeleteSound,
+    playUpdateSound,
     playErrorSound,
     playNotificationSound,
     setEnabled: (newEnabled: boolean) => options.enabled = newEnabled,

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAdmin } from '@/hooks/useAdmin';
+import { useAudioNotifications } from '@/hooks/useAudioNotifications';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -35,6 +36,7 @@ interface Product {
 
 const AdsManager = () => {
   const { isAdmin, loading: adminLoading } = useAdmin();
+  const { playCreateSound, playUpdateSound, playDeleteSound, playAdminActionSound } = useAudioNotifications();
   const [ads, setAds] = useState<Ad[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +113,7 @@ const AdsManager = () => {
           .eq('id', editingAd.id);
 
         if (error) throw error;
+        playUpdateSound();
         toast.success('Ad updated successfully');
       } else {
         const { error } = await supabase
@@ -118,6 +121,7 @@ const AdsManager = () => {
           .insert([adData]);
 
         if (error) throw error;
+        playCreateSound();
         toast.success('Ad created successfully');
       }
 
@@ -155,6 +159,7 @@ const AdsManager = () => {
         .eq('id', id);
 
       if (error) throw error;
+      playDeleteSound();
       toast.success('Ad deleted successfully');
       fetchAds();
     } catch (error) {
@@ -171,6 +176,7 @@ const AdsManager = () => {
         .eq('id', id);
 
       if (error) throw error;
+      playAdminActionSound();
       toast.success(`Ad ${!active ? 'activated' : 'deactivated'} successfully`);
       fetchAds();
     } catch (error) {

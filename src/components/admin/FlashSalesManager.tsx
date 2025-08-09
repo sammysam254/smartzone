@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAdmin, FlashSale, Product } from '@/hooks/useAdmin';
+import { useAudioNotifications } from '@/hooks/useAudioNotifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,7 @@ const FlashSalesManager = () => {
     fetchProducts 
   } = useAdmin();
   
+  const { playCreateSound, playUpdateSound, playDeleteSound } = useAudioNotifications();
   const [flashSales, setFlashSales] = useState<FlashSale[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,8 +79,10 @@ const FlashSalesManager = () => {
 
       if (editingFlashSale) {
         await updateFlashSale(editingFlashSale.id, flashSaleData);
+        playUpdateSound();
       } else {
         await createFlashSale(flashSaleData);
+        playCreateSound();
       }
 
       resetForm();
@@ -123,6 +127,7 @@ const FlashSalesManager = () => {
     if (confirm('Are you sure you want to delete this flash sale?')) {
       try {
         await deleteFlashSale(id);
+        playDeleteSound();
         loadData();
       } catch (error) {
         console.error('Error deleting flash sale:', error);

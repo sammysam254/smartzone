@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAdmin, Promotion, Product } from '@/hooks/useAdmin';
+import { useAudioNotifications } from '@/hooks/useAudioNotifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,6 +23,8 @@ const PromotionsManager = () => {
     deletePromotion,
     fetchProducts
   } = useAdmin();
+  
+  const { playCreateSound, playUpdateSound, playDeleteSound } = useAudioNotifications();
   
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -78,9 +81,11 @@ const PromotionsManager = () => {
 
       if (editingPromotion) {
         await updatePromotion(editingPromotion.id, promotionData);
+        playUpdateSound();
         toast.success('Promotion updated successfully');
       } else {
         await createPromotion(promotionData);
+        playCreateSound();
         toast.success('Promotion created successfully');
       }
 
@@ -113,6 +118,7 @@ const PromotionsManager = () => {
     
     try {
       await deletePromotion(id);
+      playDeleteSound();
       toast.success('Promotion deleted successfully');
       loadData();
     } catch (error) {

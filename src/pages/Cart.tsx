@@ -42,7 +42,7 @@ const Cart = () => {
   const { items, updateQuantity, removeFromCart, clearCart, totalPrice } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { playOrderSuccessSound } = useAudioNotifications();
+  const { playOrderSuccessSound, playOrderCancelSound } = useAudioNotifications();
   
   const [customerInfo, setCustomerInfo] = useState({
     name: '',

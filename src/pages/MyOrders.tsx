@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useAudioNotifications } from '@/hooks/useAudioNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ interface Feedback {
 
 const MyOrders = () => {
   const { user } = useAuth();
+  const { playOrderCancelSound } = useAudioNotifications();
   const [orders, setOrders] = useState<Order[]>([]);
   const [feedbacks, setFeedbacks] = useState<Record<string, Feedback>>({});
   const [loading, setLoading] = useState(true);
@@ -158,6 +160,7 @@ const MyOrders = () => {
         return;
       }
 
+      playOrderCancelSound();
       toast.success('Order cancelled successfully');
       fetchOrders();
     } catch (error) {

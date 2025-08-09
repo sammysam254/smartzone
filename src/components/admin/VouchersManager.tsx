@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAdmin, Voucher } from '@/hooks/useAdmin';
+import { useAudioNotifications } from '@/hooks/useAudioNotifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,8 +19,10 @@ const VouchersManager = () => {
     fetchVouchers, 
     createVoucher, 
     updateVoucher, 
-    deleteVoucher 
+    deleteVoucher
   } = useAdmin();
+  
+  const { playCreateSound, playUpdateSound, playDeleteSound } = useAudioNotifications();
   
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,8 +83,10 @@ const VouchersManager = () => {
 
       if (editingVoucher) {
         await updateVoucher(editingVoucher.id, voucherData);
+        playUpdateSound();
       } else {
         await createVoucher(voucherData);
+        playCreateSound();
       }
 
       resetForm();
@@ -126,6 +131,7 @@ const VouchersManager = () => {
     if (confirm('Are you sure you want to delete this voucher?')) {
       try {
         await deleteVoucher(id);
+        playDeleteSound();
         loadVouchers();
       } catch (error) {
         console.error('Error deleting voucher:', error);
