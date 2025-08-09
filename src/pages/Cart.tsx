@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/hooks/useAuth';
+import { useAudioNotifications } from '@/hooks/useAudioNotifications';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,6 +42,7 @@ const Cart = () => {
   const { items, updateQuantity, removeFromCart, clearCart, totalPrice } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { playOrderSuccessSound } = useAudioNotifications();
   
   const [customerInfo, setCustomerInfo] = useState({
     name: '',
@@ -99,6 +101,7 @@ const Cart = () => {
           setPaymentStatus(newStatus);
           
           if (newStatus === 'confirmed') {
+            playOrderSuccessSound();
             toast.success('Payment confirmed! Your order has been placed successfully.');
             clearCart();
             navigate('/my-orders');
@@ -405,6 +408,9 @@ const Cart = () => {
 
       // Clear cart after successful order
       clearCart();
+      
+      // Play success sound
+      playOrderSuccessSound();
       
       toast.success('🎉 Thank You for Your Order!\nWe\'re thrilled you chose to shop with us. Your order has been received and is now being prepared with care.\nYou\'ll receive a confirmation email shortly with all the details. In the meantime, sit back and relax—we\'ve got this!\n💌 Need help or have questions? Our support team is just a click away.\nThank you for being part of our story. We can\'t wait for you to enjoy your purchase!');
       navigate('/my-orders');

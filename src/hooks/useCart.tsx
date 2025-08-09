@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { useAudioNotifications } from '@/hooks/useAudioNotifications';
 
 interface CartItem {
   id: string;
@@ -26,6 +27,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const { user } = useAuth();
+  const { playAddToCartSound } = useAudioNotifications();
 
   // Load cart from localStorage on mount and when user changes
   useEffect(() => {
@@ -69,6 +71,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const addToCart = (product: Omit<CartItem, 'quantity'>) => {
     setItems(currentItems => {
       const existingItem = currentItems.find(item => item.id === product.id);
+      
+      // Play sound effect for adding to cart
+      playAddToCartSound();
       
       if (existingItem) {
         if (!user) {
