@@ -17,14 +17,28 @@ serve(async (req) => {
     
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
 
-    const { data: { user } } = await supabaseClient.auth.getUser(token);
-    if (!user) throw new Error("Unauthorized");
+    // Set the session with the provided token
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    if (authError || !user) {
+      console.error("Authentication error:", authError);
+      throw new Error("Unauthorized");
+    }
+
+    console.log("Authenticated user:", user.id);
 
     const { orderId } = await req.json();
     if (!orderId) throw new Error("Order ID is required");
+
+    console.log("Fetching order:", orderId, "for user:", user.id);
 
     // Fetch order details with product and payment information
     const { data: order, error: orderError } = await supabaseClient
@@ -42,9 +56,16 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    if (orderError || !order) {
+    if (orderError) {
+      console.error("Order fetch error:", orderError);
+      throw new Error(`Order fetch failed: ${orderError.message}`);
+    }
+    
+    if (!order) {
       throw new Error("Order not found or access denied");
     }
+
+    console.log("Order found:", order.id, "Status:", order.status);
 
     // Fetch payment information (M-Pesa or NCBA Loop)
     const [mpesaPayment, ncbaPayment] = await Promise.all([
