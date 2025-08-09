@@ -92,6 +92,32 @@ serve(async (req) => {
     const vat = subtotal * 0.16;
     const total = subtotal + vat;
 
+    // SmartHub Computers logo as SVG
+    const companyLogoSvg = `<svg width="200" height="80" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="200" height="80" fill="white"/>
+      <!-- Monitor/Computer Icon -->
+      <rect x="10" y="15" width="30" height="18" rx="2" fill="#2c4156" stroke="#37495e" stroke-width="1"/>
+      <rect x="11" y="16" width="28" height="16" fill="#4169ff"/>
+      <rect x="12" y="17" width="26" height="14" fill="#1e40af"/>
+      <rect x="22" y="33" width="6" height="5" fill="#2c4156"/>
+      <rect x="18" y="38" width="14" height="2" fill="#2c4156"/>
+      <circle cx="36" cy="40" r="4" fill="#29a3a3"/>
+      <circle cx="36" cy="40" r="2" fill="#2293a3"/>
+      
+      <!-- Company Name -->
+      <text x="50" y="30" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c4156">SmartHub</text>
+      <text x="50" y="45" font-family="Arial, sans-serif" font-size="14" font-weight="600" fill="#4169ff">Computers</text>
+      
+      <!-- Tech Elements -->
+      <circle cx="160" cy="20" r="3" fill="#29a3a3"/>
+      <circle cx="170" cy="25" r="2" fill="#4169ff"/>
+      <circle cx="180" cy="18" r="2.5" fill="#2c4156"/>
+      <rect x="155" y="35" width="35" height="2" rx="1" fill="#29a3a3"/>
+      <rect x="160" y="40" width="25" height="2" rx="1" fill="#4169ff"/>
+    </svg>`;
+
+    const logoBase64 = btoa(companyLogoSvg);
+
     // Generate HTML receipt
     const receiptHtml = `
       <!DOCTYPE html>
@@ -211,6 +237,24 @@ serve(async (req) => {
             font-weight: bold;
             margin: 20px 0;
           }
+          .mpesa-highlight {
+            background-color: #e8f5e8;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 5px solid #27ae60;
+          }
+          .mpesa-code {
+            font-size: 24px;
+            font-weight: bold;
+            color: #155724;
+            letter-spacing: 2px;
+            font-family: monospace;
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+          }
           .footer {
             text-align: center;
             margin-top: 40px;
@@ -240,6 +284,7 @@ serve(async (req) => {
       <body>
         <div class="receipt">
           <div class="header">
+            <img src="data:image/svg+xml;base64,${logoBase64}" alt="SmartHub Computers Logo" class="logo" />
             <div class="company-name">SmartHub Computers</div>
             <div class="contact-info">
               Koinange Street Uniafric House Room 208<br>
@@ -266,6 +311,16 @@ serve(async (req) => {
             ✓ PAYMENT CONFIRMED & VERIFIED
             <span class="status-badge status-paid">${order.status}</span>
           </div>
+
+          ${transactionCode !== 'N/A' ? `
+          <div class="mpesa-highlight">
+            <div class="section-title" style="color: #27ae60; margin-bottom: 10px;">📱 M-Pesa Transaction Confirmation</div>
+            <div class="mpesa-code">${transactionCode}</div>
+            <div style="font-size: 12px; color: #155724;">
+              Reference this code for any payment inquiries with Safaricom or our support team
+            </div>
+          </div>
+          ` : ''}
 
           <div class="section">
             <div class="section-title">Customer Information</div>
@@ -336,8 +391,12 @@ serve(async (req) => {
                   <span class="info-value">${paymentMethod}</span>
                 </div>
                 <div class="info-item">
-                  <span class="info-label">Transaction Code:</span>
-                  <span class="info-value">${transactionCode}</span>
+                  <span class="info-label">Confirmation Code:</span>
+                  <span class="info-value" style="font-weight: bold; color: #27ae60; font-size: 16px; letter-spacing: 1px;">${transactionCode}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Phone Number:</span>
+                  <span class="info-value">${payment?.phone_number || order.customer_phone || 'N/A'}</span>
                 </div>
               </div>
               <div>
@@ -346,8 +405,12 @@ serve(async (req) => {
                   <span class="info-value">${new Date(order.created_at).toLocaleDateString('en-KE')}</span>
                 </div>
                 <div class="info-item">
+                  <span class="info-label">Payment Time:</span>
+                  <span class="info-value">${new Date(order.created_at).toLocaleTimeString('en-KE', { timeZone: 'Africa/Nairobi' })}</span>
+                </div>
+                <div class="info-item">
                   <span class="info-label">Status:</span>
-                  <span class="info-value" style="color: #27ae60; font-weight: bold;">CONFIRMED</span>
+                  <span class="info-value" style="color: #27ae60; font-weight: bold;">CONFIRMED ✓</span>
                 </div>
               </div>
             </div>
@@ -357,6 +420,7 @@ serve(async (req) => {
             <p><strong>Thank you for choosing SmartHub Computers!</strong></p>
             <p>This is an official payment confirmation receipt. Keep this for your records.</p>
             <p>For support or inquiries, contact us at support@smarthubcomputers.com or call 0704144239</p>
+            <p><strong>M-Pesa Reference: ${transactionCode}</strong></p>
             <p style="margin-top: 15px; font-size: 11px;">
               Generated on ${new Date().toLocaleString('en-KE', { timeZone: 'Africa/Nairobi' })}
             </p>
@@ -370,7 +434,8 @@ serve(async (req) => {
       html: receiptHtml,
       orderId: order.id,
       customerName: order.customer_name,
-      total: total.toLocaleString()
+      total: total.toLocaleString(),
+      mpesaCode: transactionCode
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
