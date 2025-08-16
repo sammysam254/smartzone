@@ -3,11 +3,18 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from '@/integrations/supabase/client';
+import { useOptimizedProducts } from '@/hooks/useOptimizedProducts';
 
 const HeroCarousel = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Use optimized products hook for instant loading
+  const { products, loading } = useOptimizedProducts({
+    category: 'all',
+    sortBy: 'newest',
+    initialLimit: 8
+  });
 
   type HeroSlide = {
     id: string;
@@ -19,91 +26,55 @@ const HeroCarousel = () => {
     productId: string;
   };
 
-  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  // Transform products to hero slides instantly
+  const heroSlides: HeroSlide[] = products
+    .filter(p => p.in_stock && p.image_url)
+    .slice(0, 8)
+    .map(p => ({
+      id: p.id,
+      category: p.category || 'Product',
+      brand: p.category || 'Product',
+      image: p.image_url,
+      title: p.name,
+      description: `From KES ${Number(p.price || 0).toLocaleString()}`,
+      productId: p.id
+    }));
 
-  // Load in-stock products as hero slides (cache for speed)
-  useEffect(() => {
-    const CACHE_KEY = 'heroSlidesV1';
-    const TS_KEY = CACHE_KEY + ':ts';
-    const TTL = 5 * 60 * 1000; // 5 minutes
+  // Fallback slides for instant display
+  const fallbackSlides: HeroSlide[] = [
+    {
+      id: 'fallback-1',
+      category: 'Computers',
+      brand: 'SmartHub',
+      image: '/src/assets/hero-computers.jpg',
+      title: 'Premium Computers & Laptops',
+      description: 'Starting from KES 25,000',
+      productId: 'fallback-1'
+    }
+  ];
 
-    try {
-      const raw = localStorage.getItem(CACHE_KEY);
-      const ts = localStorage.getItem(TS_KEY);
-      if (raw && ts && Date.now() - parseInt(ts) < TTL) {
-        setHeroSlides(JSON.parse(raw));
-      }
-    } catch {}
-
-    (async () => {
-      try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('id, name, price, category, image_urls, images, in_stock, deleted_at')
-          .eq('in_stock', true)
-          .is('deleted_at', null)
-          .not('image_urls', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(8);
-        if (error) throw error;
-
-        const slides = (data || []).map((p: any) => {
-          let urls: string[] = [];
-          console.log('🔍 HeroCarousel processing:', p.name, 'image_urls:', p.image_urls);
-          
-          try {
-            if (p.image_urls) {
-              const parsed = JSON.parse(p.image_urls);
-              urls = Array.isArray(parsed) ? parsed : [p.image_urls];
-            }
-          } catch {
-            urls = [p.image_urls].filter(Boolean);
-          }
-          
-          // Use first available image (data: URLs are fine)
-          const image = urls[0] || 'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=1200&h=600&fit=crop';
-          console.log('✅ HeroCarousel final image for', p.name, ':', image?.substring(0, 50) + '...');
-          return {
-            id: p.id,
-            category: p.category || 'Product',
-            brand: p.category || 'Product',
-            image,
-            title: p.name,
-            description: `From KES ${Number(p.price || 0).toLocaleString()}`,
-            productId: p.id
-          } as HeroSlide;
-        });
-
-        setHeroSlides(slides);
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(slides));
-          localStorage.setItem(TS_KEY, Date.now().toString());
-        } catch {}
-      } catch (e) {
-        console.error('Error loading hero slides:', e);
-      }
-    })();
-  }, []);
+  // Use products if available, otherwise show fallback
+  const displaySlides = heroSlides.length > 0 ? heroSlides : fallbackSlides;
 
 
   // Auto-slide every 5 seconds
   useEffect(() => {
-    if (heroSlides.length <= 1) return;
+    if (displaySlides.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+      setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [heroSlides.length]);
+  }, [displaySlides.length]);
 
 
   const nextSlide = () => {
-    if (heroSlides.length === 0) return;
-    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    if (displaySlides.length === 0) return;
+    setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
   };
 
   const prevSlide = () => {
-    if (heroSlides.length === 0) return;
-    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    if (displaySlides.length === 0) return;
+    setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
   };
 
   const goToSlide = (index: number) => {
@@ -116,7 +87,7 @@ const HeroCarousel = () => {
         <div className="relative">
           {/* Carousel Container */}
           <div className="relative h-[500px] md:h-[600px] rounded-2xl overflow-hidden shadow-card bg-gradient-to-br from-background to-secondary/20">
-            {heroSlides.map((slide, index) => (
+            {displaySlides.map((slide, index) => (
               <div
                 key={slide.id}
                 className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
@@ -221,7 +192,7 @@ const HeroCarousel = () => {
           </div>
 
           {/* Navigation Arrows */}
-          {heroSlides.length > 1 && (
+          {displaySlides.length > 1 && (
             <>
               <button 
                 onClick={prevSlide}
