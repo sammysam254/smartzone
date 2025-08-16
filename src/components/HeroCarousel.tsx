@@ -9,13 +9,6 @@ const HeroCarousel = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Use optimized products hook for instant loading
-  const { products, loading } = useOptimizedProducts({
-    category: 'all',
-    sortBy: 'newest',
-    initialLimit: 8
-  });
-
   type HeroSlide = {
     id: string;
     category: string;
@@ -26,10 +19,39 @@ const HeroCarousel = () => {
     productId: string;
   };
 
-  // Transform products to hero slides instantly
+  // Instant fallback slides - always show these first
+  const fallbackSlides: HeroSlide[] = [
+    {
+      id: 'fallback-1',
+      category: 'Computers',
+      brand: 'SmartHub',
+      image: '/src/assets/hero-computers.jpg',
+      title: 'Premium Computers & Laptops',
+      description: 'Starting from KES 25,000',
+      productId: 'fallback-1'
+    },
+    {
+      id: 'fallback-2',
+      category: 'Electronics',
+      brand: 'SmartHub',
+      image: '/src/assets/hero-computers.jpg',
+      title: 'Latest Electronics & Accessories',
+      description: 'Starting from KES 5,000',
+      productId: 'fallback-2'
+    }
+  ];
+
+  // Load products in background after component mounts
+  const { products, loading } = useOptimizedProducts({
+    category: 'all',
+    sortBy: 'newest',
+    initialLimit: 6
+  });
+
+  // Transform products to hero slides
   const heroSlides: HeroSlide[] = products
     .filter(p => p.in_stock && p.image_url)
-    .slice(0, 8)
+    .slice(0, 6)
     .map(p => ({
       id: p.id,
       category: p.category || 'Product',
@@ -40,21 +62,10 @@ const HeroCarousel = () => {
       productId: p.id
     }));
 
-  // Fallback slides for instant display
-  const fallbackSlides: HeroSlide[] = [
-    {
-      id: 'fallback-1',
-      category: 'Computers',
-      brand: 'SmartHub',
-      image: '/src/assets/hero-computers.jpg',
-      title: 'Premium Computers & Laptops',
-      description: 'Starting from KES 25,000',
-      productId: 'fallback-1'
-    }
-  ];
-
-  // Use products if available, otherwise show fallback
-  const displaySlides = heroSlides.length > 0 ? heroSlides : fallbackSlides;
+  // Always start with fallback, then merge with real products once loaded
+  const displaySlides = loading || heroSlides.length === 0 
+    ? fallbackSlides 
+    : [...fallbackSlides.slice(0, 1), ...heroSlides.slice(0, 5)];
 
 
   // Auto-slide every 5 seconds
