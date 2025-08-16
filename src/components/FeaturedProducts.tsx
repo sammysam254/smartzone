@@ -20,66 +20,51 @@ interface Product {
 
 const FeaturedProducts = memo(() => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start as false for instant display
 
-  // Process image URLs instantly
+  // Lightning-fast image processing
   const processImageUrl = (imageUrls: string | string[] | null): string => {
     if (!imageUrls) return '';
+    if (Array.isArray(imageUrls)) return imageUrls[0] || '';
     
     try {
-      if (Array.isArray(imageUrls)) {
-        return imageUrls[0] || '';
-      }
-      
       const raw = imageUrls.trim();
-      if (raw.startsWith('[')) {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed[0] || '' : raw;
-      }
-      
-      return raw;
+      return raw.startsWith('[') ? JSON.parse(raw)[0] || raw : raw;
     } catch {
       return typeof imageUrls === 'string' ? imageUrls : '';
     }
   };
 
-  // Instant product loading
+  // Instant product loading - no delays
   useEffect(() => {
-    const loadFeaturedProducts = async () => {
+    const loadProducts = async () => {
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('products')
           .select('id, name, price, original_price, category, rating, reviews_count, badge, badge_color, in_stock, image_urls')
           .eq('in_stock', true)
           .is('deleted_at', null)
+          .not('image_urls', 'is', null)
           .order('created_at', { ascending: false })
           .limit(4);
 
-        if (error) throw error;
-
-        const transformedProducts = (data || []).map(product => {
-          const imageUrl = processImageUrl(product.image_urls);
-          
-          return {
-            ...product,
-            image_url: imageUrl,
-            images: [imageUrl].filter(Boolean),
-            category: product.category || 'general',
-            rating: product.rating || 0,
-            reviews_count: product.reviews_count || 0
-          };
-        }).filter(p => p.image_url);
+        const transformedProducts = (data || []).map(product => ({
+          ...product,
+          image_url: processImageUrl(product.image_urls),
+          images: [processImageUrl(product.image_urls)].filter(Boolean),
+          category: product.category || 'general',
+          rating: product.rating || 0,
+          reviews_count: product.reviews_count || 0
+        })).filter(p => p.image_url);
 
         setProducts(transformedProducts);
       } catch (error) {
-        console.error('Featured products load error:', error);
+        console.error('Featured products error:', error);
         setProducts([]);
-      } finally {
-        setLoading(false);
       }
     };
 
-    loadFeaturedProducts();
+    loadProducts();
   }, []);
 
   return (

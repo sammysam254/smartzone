@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -51,37 +50,30 @@ export default function Products() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start as false for instant display
   const [hasMore, setHasMore] = useState(true);
 
-  // Process image URLs instantly
+  // Ultra-fast image processing
   const processImageUrl = (imageUrls: string | string[] | null): string => {
     if (!imageUrls) return '';
+    if (Array.isArray(imageUrls)) return imageUrls[0] || '';
     
     try {
-      if (Array.isArray(imageUrls)) {
-        return imageUrls[0] || '';
-      }
-      
       const raw = imageUrls.trim();
-      if (raw.startsWith('[')) {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed[0] || '' : raw;
-      }
-      
-      return raw;
+      return raw.startsWith('[') ? JSON.parse(raw)[0] || raw : raw;
     } catch {
       return typeof imageUrls === 'string' ? imageUrls : '';
     }
   };
 
-  // Build optimized query
+  // Lightning-fast query builder
   const buildQuery = useCallback((offset: number, limit: number) => {
     let query = supabase
       .from('products')
       .select('id, name, price, original_price, category, rating, reviews_count, badge, badge_color, in_stock, image_urls')
       .eq('in_stock', true)
       .is('deleted_at', null)
+      .not('image_urls', 'is', null)
       .range(offset, offset + limit - 1);
 
     if (selectedCategory !== 'all') {
@@ -106,36 +98,24 @@ export default function Products() {
     return query;
   }, [selectedCategory, sortBy]);
 
-  // Instant fetch function
+  // Instant fetch - no loading states or delays
   const fetchProducts = useCallback(async (loadMore = false) => {
-    if (loading && loadMore) return;
-
     const offset = loadMore ? products.length : 0;
     const limit = loadMore ? 8 : 12;
 
-    if (!loadMore) {
-      setLoading(true);
-    }
-
     try {
       const query = buildQuery(offset, limit);
-      const { data, error } = await query;
+      const { data } = await query;
 
-      if (error) throw error;
-
-      const transformedProducts = (data || []).map(product => {
-        const imageUrl = processImageUrl(product.image_urls);
-        
-        return {
-          ...product,
-          description: null,
-          category: product.category || 'general',
-          image_url: imageUrl,
-          images: [imageUrl].filter(Boolean),
-          rating: product.rating || 0,
-          reviews_count: product.reviews_count || 0
-        };
-      }).filter(p => p.image_url);
+      const transformedProducts = (data || []).map(product => ({
+        ...product,
+        description: null,
+        category: product.category || 'general',
+        image_url: processImageUrl(product.image_urls),
+        images: [processImageUrl(product.image_urls)].filter(Boolean),
+        rating: product.rating || 0,
+        reviews_count: product.reviews_count || 0
+      })).filter(p => p.image_url);
 
       if (loadMore) {
         setProducts(prev => [...prev, ...transformedProducts]);
@@ -149,12 +129,10 @@ export default function Products() {
       if (!loadMore) {
         setProducts([]);
       }
-    } finally {
-      setLoading(false);
     }
-  }, [products.length, buildQuery, loading]);
+  }, [products.length, buildQuery]);
 
-  // Load products instantly when filters change
+  // Instant load on filter changes
   useEffect(() => {
     fetchProducts(false);
   }, [selectedCategory, sortBy]);

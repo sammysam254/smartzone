@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
@@ -20,7 +19,7 @@ const HeroCarousel = () => {
     productId: string;
   };
 
-  // Instant fallback slides - always show these first
+  // Instant fallback slides
   const fallbackSlides: HeroSlide[] = [
     {
       id: 'fallback-1',
@@ -42,99 +41,87 @@ const HeroCarousel = () => {
     }
   ];
 
-  // Fast product loading - no hooks, direct fetch
+  // Ultra-fast product loading with immediate display
   useEffect(() => {
-    const loadProductsInstantly = async () => {
+    // Show fallback immediately
+    setHeroSlides(fallbackSlides);
+    
+    // Load real products in background - no await, no loading states
+    const loadProducts = async () => {
       try {
         const { data } = await supabase
           .from('products')
           .select('id, name, price, category, image_urls')
           .eq('in_stock', true)
           .is('deleted_at', null)
+          .not('image_urls', 'is', null)
           .order('created_at', { ascending: false })
-          .limit(6);
+          .limit(4);
 
-        if (data && data.length > 0) {
-          const productSlides = data
-            .filter(p => p.image_urls)
-            .map(p => {
-              let imageUrl = '';
-              try {
-                if (Array.isArray(p.image_urls)) {
-                  imageUrl = p.image_urls[0] || '';
-                } else if (typeof p.image_urls === 'string') {
-                  const raw = p.image_urls.trim();
-                  if (raw.startsWith('[')) {
-                    const parsed = JSON.parse(raw);
-                    imageUrl = Array.isArray(parsed) ? parsed[0] || '' : raw;
-                  } else {
-                    imageUrl = raw;
-                  }
-                }
-              } catch {
-                imageUrl = typeof p.image_urls === 'string' ? p.image_urls : '';
+        if (data?.length) {
+          const productSlides = data.map(p => {
+            let imageUrl = '';
+            try {
+              if (Array.isArray(p.image_urls)) {
+                imageUrl = p.image_urls[0] || '';
+              } else if (typeof p.image_urls === 'string') {
+                const raw = p.image_urls.trim();
+                imageUrl = raw.startsWith('[') ? JSON.parse(raw)[0] || raw : raw;
               }
+            } catch {
+              imageUrl = typeof p.image_urls === 'string' ? p.image_urls : '';
+            }
 
-              return {
-                id: p.id,
-                category: p.category || 'Product',
-                brand: p.category || 'Product',
-                image: imageUrl,
-                title: p.name,
-                description: `From KES ${Number(p.price || 0).toLocaleString()}`,
-                productId: p.id
-              };
-            })
-            .filter(slide => slide.image);
+            return {
+              id: p.id,
+              category: p.category || 'Product',
+              brand: p.category || 'SmartHub',
+              image: imageUrl,
+              title: p.name,
+              description: `From KES ${Number(p.price || 0).toLocaleString()}`,
+              productId: p.id
+            };
+          }).filter(slide => slide.image);
 
-          // Merge with fallback for variety
-          const combinedSlides = [fallbackSlides[0], ...productSlides.slice(0, 5)];
-          setHeroSlides(combinedSlides);
-        } else {
-          setHeroSlides(fallbackSlides);
+          // Update with real products only if we got valid data
+          if (productSlides.length > 0) {
+            setHeroSlides([fallbackSlides[0], ...productSlides]);
+          }
         }
       } catch (error) {
-        console.error('Hero products load error:', error);
-        setHeroSlides(fallbackSlides);
+        console.error('Hero load error:', error);
+        // Keep fallback slides on error
       }
     };
 
-    loadProductsInstantly();
+    loadProducts();
   }, []);
 
-  // Start with fallback immediately, then update with products
-  const displaySlides = heroSlides.length > 0 ? heroSlides : fallbackSlides;
-
-  // Auto-slide every 5 seconds
+  // Auto-slide
   useEffect(() => {
-    if (displaySlides.length <= 1) return;
+    if (heroSlides.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [displaySlides.length]);
+  }, [heroSlides.length]);
 
   const nextSlide = () => {
-    if (displaySlides.length === 0) return;
-    setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
+    if (heroSlides.length === 0) return;
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
   };
 
   const prevSlide = () => {
-    if (displaySlides.length === 0) return;
-    setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
-  };
-
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
+    if (heroSlides.length === 0) return;
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
   };
 
   return (
     <section className="relative bg-gradient-to-br from-background via-secondary/20 to-accent/10 py-8 md:py-20 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="relative">
-          {/* Carousel Container */}
           <div className="relative h-[500px] md:h-[600px] rounded-2xl overflow-hidden shadow-card bg-gradient-to-br from-background to-secondary/20">
-            {displaySlides.map((slide, index) => (
+            {heroSlides.map((slide, index) => (
               <div
                 key={slide.id}
                 className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
@@ -143,7 +130,6 @@ const HeroCarousel = () => {
               >
                 {/* Mobile Layout */}
                 <div className="flex flex-col lg:hidden h-full">
-                  {/* Image Section for Mobile */}
                   <div className="relative h-[300px] w-full bg-white rounded-lg">
                     <img 
                       src={slide.image}
@@ -153,7 +139,6 @@ const HeroCarousel = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-transparent to-transparent rounded-lg"></div>
                   </div>
                   
-                  {/* Content Section for Mobile */}
                   <div className="flex-1 space-y-4 px-6 py-6 bg-background rounded-b-lg">
                     <div className="space-y-3">
                       <div className="text-xs text-primary font-semibold uppercase tracking-wider">
@@ -191,7 +176,6 @@ const HeroCarousel = () => {
 
                 {/* Desktop Layout */}
                 <div className="hidden lg:grid lg:grid-cols-2 gap-8 items-center h-full">
-                  {/* Content */}
                   <div className="space-y-6 px-6 md:px-12 py-8">
                     <div className="space-y-4">
                       <div className="text-sm text-primary font-semibold uppercase tracking-wider">
@@ -225,7 +209,6 @@ const HeroCarousel = () => {
                     </div>
                   </div>
 
-                  {/* Image */}
                   <div className="relative h-full min-h-[400px] bg-white rounded-lg p-4">
                     <img 
                       src={slide.image}
@@ -238,20 +221,18 @@ const HeroCarousel = () => {
             ))}
           </div>
 
-          {/* Navigation Arrows */}
-          {displaySlides.length > 1 && (
+          {/* Navigation */}
+          {heroSlides.length > 1 && (
             <>
               <button 
                 onClick={prevSlide}
                 className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 md:p-3 rounded-full shadow-md z-10 transition-all duration-200"
-                aria-label="Previous slide"
               >
                 <ChevronLeft className="h-4 w-4 md:h-6 md:w-6" />
               </button>
               <button 
                 onClick={nextSlide}
                 className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 md:p-3 rounded-full shadow-md z-10 transition-all duration-200"
-                aria-label="Next slide"
               >
                 <ChevronRight className="h-4 w-4 md:h-6 md:w-6" />
               </button>
