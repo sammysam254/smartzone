@@ -3,11 +3,12 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useOptimizedProducts } from '@/hooks/useOptimizedProducts';
+import { supabase } from '@/integrations/supabase/client';
 
 const HeroCarousel = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [heroSlides, setHeroSlides] = useState([]);
 
   type HeroSlide = {
     id: string;
@@ -41,32 +42,68 @@ const HeroCarousel = () => {
     }
   ];
 
-  // Load products in background after component mounts
-  const { products, loading } = useOptimizedProducts({
-    category: 'all',
-    sortBy: 'newest',
-    initialLimit: 6
-  });
+  // Fast product loading - no hooks, direct fetch
+  useEffect(() => {
+    const loadProductsInstantly = async () => {
+      try {
+        const { data } = await supabase
+          .from('products')
+          .select('id, name, price, category, image_urls')
+          .eq('in_stock', true)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .limit(6);
 
-  // Transform products to hero slides
-  const heroSlides: HeroSlide[] = products
-    .filter(p => p.in_stock && p.image_url)
-    .slice(0, 6)
-    .map(p => ({
-      id: p.id,
-      category: p.category || 'Product',
-      brand: p.category || 'Product',
-      image: p.image_url,
-      title: p.name,
-      description: `From KES ${Number(p.price || 0).toLocaleString()}`,
-      productId: p.id
-    }));
+        if (data && data.length > 0) {
+          const productSlides = data
+            .filter(p => p.image_urls)
+            .map(p => {
+              let imageUrl = '';
+              try {
+                if (Array.isArray(p.image_urls)) {
+                  imageUrl = p.image_urls[0] || '';
+                } else if (typeof p.image_urls === 'string') {
+                  const raw = p.image_urls.trim();
+                  if (raw.startsWith('[')) {
+                    const parsed = JSON.parse(raw);
+                    imageUrl = Array.isArray(parsed) ? parsed[0] || '' : raw;
+                  } else {
+                    imageUrl = raw;
+                  }
+                }
+              } catch {
+                imageUrl = typeof p.image_urls === 'string' ? p.image_urls : '';
+              }
 
-  // Always start with fallback, then merge with real products once loaded
-  const displaySlides = loading || heroSlides.length === 0 
-    ? fallbackSlides 
-    : [...fallbackSlides.slice(0, 1), ...heroSlides.slice(0, 5)];
+              return {
+                id: p.id,
+                category: p.category || 'Product',
+                brand: p.category || 'Product',
+                image: imageUrl,
+                title: p.name,
+                description: `From KES ${Number(p.price || 0).toLocaleString()}`,
+                productId: p.id
+              };
+            })
+            .filter(slide => slide.image);
 
+          // Merge with fallback for variety
+          const combinedSlides = [fallbackSlides[0], ...productSlides.slice(0, 5)];
+          setHeroSlides(combinedSlides);
+        } else {
+          setHeroSlides(fallbackSlides);
+        }
+      } catch (error) {
+        console.error('Hero products load error:', error);
+        setHeroSlides(fallbackSlides);
+      }
+    };
+
+    loadProductsInstantly();
+  }, []);
+
+  // Start with fallback immediately, then update with products
+  const displaySlides = heroSlides.length > 0 ? heroSlides : fallbackSlides;
 
   // Auto-slide every 5 seconds
   useEffect(() => {
@@ -76,7 +113,6 @@ const HeroCarousel = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, [displaySlides.length]);
-
 
   const nextSlide = () => {
     if (displaySlides.length === 0) return;
@@ -221,8 +257,6 @@ const HeroCarousel = () => {
               </button>
             </>
           )}
-
-
         </div>
       </div>
     </section>
